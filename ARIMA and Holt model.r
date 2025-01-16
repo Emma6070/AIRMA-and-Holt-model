@@ -37,12 +37,22 @@ print(garch_forecast)
 # Holt's linear trend model
 getSymbols("STOCK", from = "2020-12-28")
 holt_CP <- Cl(STOCK)
-holt_train <- window(holt_CP, end = 600)
-holt_test <- window(holt_CP, start = 601)
+
+# Define the training and testing periods using time-based indexing
+train_end <- index(holt_CP)[600]
+test_start <- index(holt_CP)[601]
+
+holt_train <- window(holt_CP, end = train_end)
+holt_test <- window(holt_CP, start = test_start)
+
+# Ensure the test set has enough observations
+if (length(holt_test) < 100) {
+  stop("Not enough observations in the test set.")
+}
 
 beta <- seq(0.0001, 0.5, by = 0.001)
 RMSE <- sapply(beta, function(b) {
-  fit <- holt(holt_train, beta = b, h = 100)
+  fit <- holt(holt_train, beta = b, h = length(holt_test))
   accuracy(fit, holt_test)[2, 2]
 })
 
